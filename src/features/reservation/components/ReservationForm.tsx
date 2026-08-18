@@ -38,6 +38,12 @@ function getToday(): string {
   return `${year}-${month}-${day}`;
 }
 
+function getCurrentMinutes(): number {
+  const now = new Date();
+
+  return now.getHours() * 60 + now.getMinutes();
+}
+
 function createTimeOptions(
   horarioApertura: string,
   horarioCierre: string,
@@ -146,16 +152,32 @@ export function ReservationForm({
   const { user } = useAuth();
 
   const today = useMemo(() => getToday(), []);
-  const timeOptions = useMemo(
-  () =>
-    createTimeOptions(
-      restaurant.horarioApertura,
-      restaurant.horarioCierre,
-    ),
-  [restaurant.horarioApertura, restaurant.horarioCierre],
-);
-
   const [fecha, setFecha] = useState(today);
+  const timeOptions = useMemo(() => {
+  const options = createTimeOptions(
+    restaurant.horarioApertura,
+    restaurant.horarioCierre,
+  );
+
+  // Si la reserva es para hoy, ocultamos las horas que ya pasaron.
+  if (fecha !== today) {
+    return options;
+  }
+
+  const currentMinutes = getCurrentMinutes();
+
+  return options.filter((time) => {
+    const [hours, minutes] = time.split(":").map(Number);
+    const timeMinutes = hours * 60 + minutes;
+
+    return timeMinutes > currentMinutes;
+  });
+}, [
+  restaurant.horarioApertura,
+  restaurant.horarioCierre,
+  fecha,
+  today,
+]);
   const [hora, setHora] = useState("");
   const [personas, setPersonas] = useState("2");
   const [nombre, setNombre] = useState(user?.name ?? "");
@@ -178,6 +200,15 @@ export function ReservationForm({
 
     if (!hora) {
       newErrors.hora = "Selecciona una hora.";
+    } else if (fecha === today) {
+      const [hours, minutes] = hora.split(":").map(Number);
+
+      const selectedMinutes = hours * 60 + minutes;
+      const currentMinutes = getCurrentMinutes();
+
+      if (selectedMinutes <= currentMinutes) {
+        newErrors.hora = "La hora seleccionada ya pasó.";
+      }
     }
 
     if (!personas) {

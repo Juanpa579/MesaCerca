@@ -75,14 +75,65 @@ const RESERVATIONS_COL = "reservas";
 
 // ─── Crear reserva ────────────────────────────────────────────────────────────
 
+function getToday(): string {
+  const today = new Date();
+
+  const year = today.getFullYear();
+  const month = String(today.getMonth() + 1).padStart(2, "0");
+  const day = String(today.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function getCurrentMinutes(): number {
+  const now = new Date();
+
+  return now.getHours() * 60 + now.getMinutes();
+}
+
 /**
  * Crea una nueva reserva.
  *
  * La reserva siempre comienza con estado "pendiente".
  */
+
 export async function createReservation(
   data: ReservationInput,
 ): Promise<string> {
+  const today = getToday();
+
+  // Una reserva no puede hacerse para una fecha anterior a hoy.
+  if (data.fecha < today) {
+    throw new Error(
+      "No puedes realizar una reserva para una fecha anterior a hoy.",
+    );
+  }
+
+  // Si la reserva es para hoy, la hora debe ser futura.
+  if (data.fecha === today) {
+    const [hours, minutes] = data.hora.split(":").map(Number);
+
+    if (
+      Number.isNaN(hours) ||
+      Number.isNaN(minutes) ||
+      hours < 0 ||
+      hours > 23 ||
+      minutes < 0 ||
+      minutes > 59
+    ) {
+      throw new Error("La hora de la reserva no es válida.");
+    }
+
+    const selectedMinutes = hours * 60 + minutes;
+    const currentMinutes = getCurrentMinutes();
+
+    if (selectedMinutes <= currentMinutes) {
+      throw new Error(
+        "No puedes realizar una reserva para una hora que ya pasó.",
+      );
+    }
+  }
+
   const reservationRef = await addDoc(
     collection(db, RESERVATIONS_COL),
     {

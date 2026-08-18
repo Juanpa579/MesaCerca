@@ -88,9 +88,45 @@ export function RestaurantProfileForm({
     setSuccess("");
   };
 
+  function validateSchedule(
+    horarioApertura: string,
+    horarioCierre: string,
+  ): string | undefined {
+    if (!horarioApertura || !horarioCierre) {
+      return "Debes seleccionar un horario de apertura y cierre.";
+    }
+
+    const [openingHour, openingMinute] = horarioApertura
+      .split(":")
+      .map(Number);
+
+    const [closingHour, closingMinute] = horarioCierre
+      .split(":")
+      .map(Number);
+
+    const openingMinutes = openingHour * 60 + openingMinute;
+    const closingMinutes = closingHour * 60 + closingMinute;
+
+    if (closingMinutes <= openingMinutes) {
+      return "La hora de cierre debe ser posterior a la hora de apertura.";
+    }
+
+    return undefined;
+  }
+
   const handleSaveProfile = async () => {
     setError("");
     setSuccess("");
+
+    const scheduleError = validateSchedule(
+      formData.horarioApertura,
+      formData.horarioCierre,
+    );
+
+    if (scheduleError) {
+      setError(scheduleError);
+      return;
+    }
 
     setIsSaving(true);
 
@@ -102,7 +138,9 @@ export function RestaurantProfileForm({
         ...formData,
       });
 
-      setSuccess("Información del restaurante actualizada correctamente.");
+      setSuccess(
+        "Información del restaurante actualizada correctamente.",
+      );
     } catch (err) {
       setError(
         err instanceof Error
@@ -278,6 +316,27 @@ export function RestaurantProfileForm({
               className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
               placeholder="Ej. Italiana"
             />
+          </div>
+
+          {/* Rango de precios */}
+          <div>
+            <label className="mb-2 block text-sm font-semibold text-slate-700">
+              Rango de precios
+            </label>
+
+            <select
+              value={formData.rangoPrecios}
+              onChange={(e) =>
+                handleChange("rangoPrecios", e.target.value)
+              }
+              disabled={isSaving}
+              className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
+            >
+              <option value="$">$ · Económico</option>
+              <option value="$$">$$ · Moderado</option>
+              <option value="$$$">$$$ · Costoso</option>
+              <option value="$$$$">$$$$ · Premium</option>
+            </select>
           </div>
 
           {/* Dirección */}
