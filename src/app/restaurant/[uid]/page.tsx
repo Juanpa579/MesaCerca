@@ -1,9 +1,17 @@
 import Link from "next/link";
-import { CalendarPlus, Clock, MapPin, Phone } from "lucide-react";
+import {
+  CalendarPlus,
+  Clock,
+  MapPin,
+  Phone,
+  Star,
+} from "lucide-react";
 import { notFound } from "next/navigation";
 
 import { getRestaurantProfile } from "@/services/restaurantService";
 import { PublicRestaurantMenu } from "@/features/restaurant/components/PublicRestaurantMenu";
+import { RestaurantReview } from "@/features/restaurant/components/RestaurantReview";
+import { RestaurantRating } from "@/features/restaurant/components/RestaurantRating";
 
 interface RestaurantPageProps {
   params: Promise<{
@@ -94,79 +102,110 @@ export default async function RestaurantPage({
           </div>
 
           {/* =================================================
-              INFORMACIÓN
+              COLUMNA DERECHA
               ================================================= */}
-          <aside className="lg:sticky lg:top-24 lg:self-start">
-            <div className="rounded-2xl bg-white p-7 shadow-md">
-              <h2 className="text-3xl font-bold text-slate-900">
-                Información
-              </h2>
+          <div className="min-w-0">
+            {/* =================================================
+                INFORMACIÓN
+                ================================================= */}
+            <aside className="lg:sticky lg:top-24 lg:self-start">
+              <div className="rounded-2xl bg-white p-7 shadow-md">
+                <h2 className="text-3xl font-bold text-slate-900">
+                  Información
+                </h2>
 
-              <div className="mt-8 space-y-7">
-                {/* Dirección */}
-                {restaurant.direccion && (
-                  <div className="flex gap-4">
-                    <MapPin className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" />
-
-                    <div>
-                      <p className="font-bold text-slate-900">
-                        Dirección
-                      </p>
-
-                      <p className="mt-1 text-base leading-relaxed text-slate-600">
-                        {restaurant.direccion}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Teléfono */}
-                {restaurant.telefono && (
-                  <div className="flex gap-4">
-                    <Phone className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" />
-
-                    <div>
-                      <p className="font-bold text-slate-900">
-                        Teléfono
-                      </p>
-
-                      <p className="mt-1 text-base text-slate-600">
-                        {restaurant.telefono}
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {/* Horario */}
-                {restaurant.horarioApertura &&
-                  restaurant.horarioCierre && (
+                <div className="mt-8 space-y-7">
+                  {/* Dirección */}
+                  {restaurant.direccion && (
                     <div className="flex gap-4">
-                      <Clock className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" />
+                      <MapPin className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" />
 
                       <div>
                         <p className="font-bold text-slate-900">
-                          Horario
+                          Dirección
                         </p>
 
-                        <p className="mt-1 text-base text-slate-600">
-                          {restaurant.horarioApertura} -{" "}
-                          {restaurant.horarioCierre}
+                        <p className="mt-1 text-base leading-relaxed text-slate-600">
+                          {restaurant.direccion}
                         </p>
                       </div>
                     </div>
                   )}
-              </div>
 
-              {/* Reserva */}
-              <Link
-                href={`/restaurant/${restaurant.uid}/reserve`}
-                className="mt-9 flex w-full items-center justify-center gap-3 rounded-xl bg-orange-500 px-5 py-4 text-lg font-semibold text-white transition-colors hover:bg-orange-600"
-              >
-                <CalendarPlus className="h-6 w-6" />
-                Hacer Reserva
-              </Link>
+                  {/* Calificación */}
+                  <div className="flex gap-4">
+                    <Star className="mt-0.5 h-6 w-6 shrink-0 fill-orange-400 text-orange-400" />
+
+                    <div>
+                      <p className="font-bold text-slate-900">
+                        Calificación
+                      </p>
+
+                      <div className="mt-1">
+                        <RestaurantRating
+                          restauranteId={restaurant.uid}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Teléfono */}
+                  {restaurant.telefono && (
+                    <div className="flex gap-4">
+                      <Phone className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" />
+
+                      <div>
+                        <p className="font-bold text-slate-900">
+                          Teléfono
+                        </p>
+
+                        <p className="mt-1 text-base text-slate-600">
+                          {restaurant.telefono}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Horario */}
+                  {restaurant.horarioApertura &&
+                    restaurant.horarioCierre && (
+                      <div className="flex gap-4">
+                        <Clock className="mt-0.5 h-6 w-6 shrink-0 text-slate-500" />
+
+                        <div>
+                          <p className="font-bold text-slate-900">
+                            Horario
+                          </p>
+
+                          <p className="mt-1 text-base text-slate-600">
+                            {restaurant.horarioApertura} -{" "}
+                            {restaurant.horarioCierre}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                </div>
+
+                {/* Reserva */}
+                <Link
+                  href={`/restaurant/${restaurant.uid}/reserve`}
+                  className="mt-9 flex w-full items-center justify-center gap-3 rounded-xl bg-orange-500 px-5 py-4 text-lg font-semibold text-white transition-colors hover:bg-orange-600"
+                >
+                  <CalendarPlus className="h-6 w-6" />
+                  Hacer Reserva
+                </Link>
+              </div>
+            </aside>
+
+            {/* =================================================
+                RESEÑAS
+                ================================================= */}
+            <div className="mt-10">
+              <RestaurantReview
+                restauranteId={restaurant.uid}
+              />
             </div>
-          </aside>
+          </div>
         </div>
       </section>
     </main>

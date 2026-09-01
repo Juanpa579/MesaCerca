@@ -5,6 +5,7 @@ import {
   Store,
   UtensilsCrossed,
   CalendarDays,
+  MessageSquare,
   Loader2,
 } from "lucide-react";
 
@@ -12,6 +13,7 @@ import { useAuth } from "@/context/AuthContext";
 import { RestaurantProfileForm } from "./RestaurantProfileForm";
 import { RestaurantMenu } from "./RestaurantMenu";
 import { RestaurantReservations } from "./RestaurantReservations";
+import { RestaurantReviews } from "./RestaurantReviews";
 
 import {
   getRestaurantProfile,
@@ -21,7 +23,11 @@ import type {
   RestaurantProfile,
 } from "@/services/restaurantService";
 
-type DashboardSection = "perfil" | "menu" | "reservas";
+type DashboardSection =
+  | "perfil"
+  | "menu"
+  | "reservas"
+  | "resenas";
 
 export function RestaurantDashboard() {
   const { user } = useAuth();
@@ -97,8 +103,8 @@ export function RestaurantDashboard() {
           </h1>
 
           <p className="mt-2 text-slate-600">
-            Gestiona la información, el menú y las reservas
-            de tu restaurante.
+            Gestiona la información, el menú, las reservas
+            y las reseñas de tu restaurante.
           </p>
         </div>
 
@@ -147,6 +153,20 @@ export function RestaurantDashboard() {
             >
               <CalendarDays className="h-5 w-5" />
               Reservas
+            </button>
+
+            {/* Reseñas */}
+            <button
+              type="button"
+              onClick={() => setSection("resenas")}
+              className={`mt-1 flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-sm font-semibold transition ${
+                section === "resenas"
+                  ? "bg-orange-50 text-orange-600"
+                  : "text-slate-600 hover:bg-slate-50"
+              }`}
+            >
+              <MessageSquare className="h-5 w-5" />
+              Reseñas
             </button>
 
           </aside>
@@ -199,6 +219,13 @@ export function RestaurantDashboard() {
             {/* Reservas */}
             {section === "reservas" && (
               <RestaurantReservations uid={user.uid} />
+            )}
+
+            {/* Reseñas */}
+            {section === "resenas" && (
+              <RestaurantReviews
+                restauranteId={user.uid}
+              />
             )}
 
           </section>

@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 
 import type { RestaurantProfile } from "@/services/restaurantService";
+import { RestaurantRating } from "./RestaurantRating";
 
 interface RestaurantCardProps {
   restaurant: RestaurantProfile;
@@ -47,7 +48,8 @@ export function RestaurantCard({
         {/* Información */}
         <div className="p-5">
           <h3 className="text-xl font-bold text-slate-900 transition-colors group-hover:text-orange-600">
-            {restaurant.nombreRestaurante || "Restaurante sin nombre"}
+            {restaurant.nombreRestaurante ||
+              "Restaurante sin nombre"}
           </h3>
 
           {restaurant.tipoCocina && (
@@ -55,6 +57,13 @@ export function RestaurantCard({
               {restaurant.tipoCocina}
             </p>
           )}
+
+          {/* Calificación */}
+          <div className="mt-2">
+            <RestaurantRating
+              restauranteId={restaurant.uid}
+            />
+          </div>
 
           {restaurant.descripcion && (
             <p className="mt-3 line-clamp-2 text-sm text-slate-600">
@@ -66,18 +75,24 @@ export function RestaurantCard({
             {restaurant.direccion && (
               <div className="flex items-start gap-2 text-sm text-slate-600">
                 <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+
                 <span className="line-clamp-1">
                   {restaurant.direccion}
                 </span>
               </div>
             )}
 
-            {restaurant.horarioApertura && restaurant.horarioCierre && (
-              <div className="flex items-start gap-2 text-sm text-slate-600">
-                <Clock className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
-                <span>{restaurant.horarioApertura} - {restaurant.horarioCierre}</span>
-              </div>
-            )}
+            {restaurant.horarioApertura &&
+              restaurant.horarioCierre && (
+                <div className="flex items-start gap-2 text-sm text-slate-600">
+                  <Clock className="mt-0.5 h-4 w-4 shrink-0 text-slate-400" />
+
+                  <span>
+                    {restaurant.horarioApertura} -{" "}
+                    {restaurant.horarioCierre}
+                  </span>
+                </div>
+              )}
           </div>
         </div>
       </Link>

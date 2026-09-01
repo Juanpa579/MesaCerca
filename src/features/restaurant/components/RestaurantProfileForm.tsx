@@ -1,12 +1,12 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useRef, useState } from "react";
 import {
   Camera,
   Loader2,
   Save,
   Upload,
-  X,
 } from "lucide-react";
 
 import type {
@@ -18,6 +18,26 @@ import {
   updateRestaurantProfile,
   saveCoverImage,
 } from "../../../services/restaurantService";
+
+// Leaflet necesita ejecutarse solamente en el navegador.
+// Por eso el mapa se carga dinámicamente con SSR desactivado.
+const RestaurantLocationPicker = dynamic(
+  () =>
+    import("./RestaurantLocationPicker").then(
+      (mod) => mod.RestaurantLocationPicker,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[400px] items-center justify-center rounded-xl bg-slate-100">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Cargando mapa...
+        </div>
+      </div>
+    ),
+  },
+);
 
 interface RestaurantProfileFormProps {
   uid: string;
@@ -41,7 +61,8 @@ export function RestaurantProfileForm({
 }: RestaurantProfileFormProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState<RestaurantProfileInput>({
+  const [formData, setFormData] =
+  useState<RestaurantProfileInput>({
     nombreRestaurante: profile.nombreRestaurante,
     tipoCocina: profile.tipoCocina,
     direccion: profile.direccion,
@@ -50,30 +71,38 @@ export function RestaurantProfileForm({
     horarioApertura: profile.horarioApertura,
     horarioCierre: profile.horarioCierre,
     rangoPrecios: profile.rangoPrecios,
+
+    latitud: profile.latitud ?? null,
+    longitud: profile.longitud ?? null,
   });
 
-  const [imagePreview, setImagePreview] = useState(profile.imagenPortada);
+  const [imagePreview, setImagePreview] =
+    useState(profile.imagenPortada);
 
   const [isSaving, setIsSaving] = useState(false);
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] =
+    useState(false);
 
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
   useEffect(() => {
-    setFormData({
-      nombreRestaurante: profile.nombreRestaurante,
-      tipoCocina: profile.tipoCocina,
-      direccion: profile.direccion,
-      telefono: profile.telefono,
-      descripcion: profile.descripcion,
-      horarioApertura: profile.horarioApertura,
-      horarioCierre: profile.horarioCierre,
-      rangoPrecios: profile.rangoPrecios,
-    });
+  setFormData({
+    nombreRestaurante: profile.nombreRestaurante,
+    tipoCocina: profile.tipoCocina,
+    direccion: profile.direccion,
+    telefono: profile.telefono,
+    descripcion: profile.descripcion,
+    horarioApertura: profile.horarioApertura,
+    horarioCierre: profile.horarioCierre,
+    rangoPrecios: profile.rangoPrecios,
 
-    setImagePreview(profile.imagenPortada);
-  }, [profile]);
+    latitud: profile.latitud ?? null,
+    longitud: profile.longitud ?? null,
+  });
+
+  setImagePreview(profile.imagenPortada);
+}, [profile]);
 
   const handleChange = (
     field: keyof RestaurantProfileInput,
@@ -88,6 +117,20 @@ export function RestaurantProfileForm({
     setSuccess("");
   };
 
+  const handleLocationChange = (
+    latitud: number,
+    longitud: number,
+  ) => {
+    setFormData((prev) => ({
+      ...prev,
+      latitud,
+      longitud,
+    }));
+
+    setError("");
+    setSuccess("");
+  };
+
   function validateSchedule(
     horarioApertura: string,
     horarioCierre: string,
@@ -96,16 +139,17 @@ export function RestaurantProfileForm({
       return "Debes seleccionar un horario de apertura y cierre.";
     }
 
-    const [openingHour, openingMinute] = horarioApertura
-      .split(":")
-      .map(Number);
+    const [openingHour, openingMinute] =
+      horarioApertura.split(":").map(Number);
 
-    const [closingHour, closingMinute] = horarioCierre
-      .split(":")
-      .map(Number);
+    const [closingHour, closingMinute] =
+      horarioCierre.split(":").map(Number);
 
-    const openingMinutes = openingHour * 60 + openingMinute;
-    const closingMinutes = closingHour * 60 + closingMinute;
+    const openingMinutes =
+      openingHour * 60 + openingMinute;
+
+    const closingMinutes =
+      closingHour * 60 + closingMinute;
 
     if (closingMinutes <= openingMinutes) {
       return "La hora de cierre debe ser posterior a la hora de apertura.";
@@ -128,10 +172,23 @@ export function RestaurantProfileForm({
       return;
     }
 
+    if (
+      formData.latitud === null ||
+      formData.longitud === null
+    ) {
+      setError(
+        "Debes seleccionar la ubicación del restaurante en el mapa.",
+      );
+      return;
+    }
+
     setIsSaving(true);
 
     try {
-      await updateRestaurantProfile(uid, formData);
+      await updateRestaurantProfile(
+        uid,
+        formData,
+      );
 
       onProfileUpdated({
         ...profile,
@@ -157,7 +214,6 @@ export function RestaurantProfileForm({
   ) => {
     const file = event.target.files?.[0];
 
-    // Permite volver a seleccionar el mismo archivo
     event.target.value = "";
 
     if (!file) return;
@@ -178,7 +234,10 @@ export function RestaurantProfileForm({
     setIsUploadingImage(true);
 
     try {
-      const base64 = await saveCoverImage(uid, file);
+      const base64 = await saveCoverImage(
+        uid,
+        file,
+      );
 
       setImagePreview(base64);
 
@@ -187,7 +246,9 @@ export function RestaurantProfileForm({
         imagenPortada: base64,
       });
 
-      setSuccess("Imagen de portada actualizada correctamente.");
+      setSuccess(
+        "Imagen de portada actualizada correctamente.",
+      );
     } catch (err) {
       setError(
         err instanceof Error
@@ -201,7 +262,10 @@ export function RestaurantProfileForm({
 
   return (
     <div className="space-y-6">
-      {/* Portada */}
+      {/* =====================================================
+          PORTADA
+          ===================================================== */}
+
       <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
         <div className="relative h-56 bg-slate-100">
           {imagePreview ? (
@@ -214,6 +278,7 @@ export function RestaurantProfileForm({
             <div className="flex h-full items-center justify-center">
               <div className="text-center text-slate-400">
                 <Camera className="mx-auto mb-2 h-10 w-10" />
+
                 <p className="text-sm">
                   No hay imagen de portada
                 </p>
@@ -223,8 +288,12 @@ export function RestaurantProfileForm({
 
           <button
             type="button"
-            onClick={() => fileInputRef.current?.click()}
-            disabled={isUploadingImage || isSaving}
+            onClick={() =>
+              fileInputRef.current?.click()
+            }
+            disabled={
+              isUploadingImage || isSaving
+            }
             className="absolute bottom-4 right-4 flex items-center gap-2 rounded-lg bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-md transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isUploadingImage ? (
@@ -256,7 +325,10 @@ export function RestaurantProfileForm({
         </div>
       </section>
 
-      {/* Mensajes */}
+      {/* =====================================================
+          MENSAJES
+          ===================================================== */}
+
       {error && (
         <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
           {error}
@@ -269,7 +341,10 @@ export function RestaurantProfileForm({
         </div>
       )}
 
-      {/* Información */}
+      {/* =====================================================
+          INFORMACIÓN
+          ===================================================== */}
+
       <section className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
         <div className="mb-6">
           <h2 className="text-xl font-bold text-slate-900">
@@ -292,7 +367,10 @@ export function RestaurantProfileForm({
               type="text"
               value={formData.nombreRestaurante}
               onChange={(e) =>
-                handleChange("nombreRestaurante", e.target.value)
+                handleChange(
+                  "nombreRestaurante",
+                  e.target.value,
+                )
               }
               disabled={isSaving}
               className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
@@ -310,7 +388,10 @@ export function RestaurantProfileForm({
               type="text"
               value={formData.tipoCocina}
               onChange={(e) =>
-                handleChange("tipoCocina", e.target.value)
+                handleChange(
+                  "tipoCocina",
+                  e.target.value,
+                )
               }
               disabled={isSaving}
               className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
@@ -327,15 +408,29 @@ export function RestaurantProfileForm({
             <select
               value={formData.rangoPrecios}
               onChange={(e) =>
-                handleChange("rangoPrecios", e.target.value)
+                handleChange(
+                  "rangoPrecios",
+                  e.target.value,
+                )
               }
               disabled={isSaving}
               className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
             >
-              <option value="$">$ · Económico</option>
-              <option value="$$">$$ · Moderado</option>
-              <option value="$$$">$$$ · Costoso</option>
-              <option value="$$$$">$$$$ · Premium</option>
+              <option value="$">
+                $ · Económico
+              </option>
+
+              <option value="$$">
+                $$ · Moderado
+              </option>
+
+              <option value="$$$">
+                $$$ · Costoso
+              </option>
+
+              <option value="$$$$">
+                $$$$ · Premium
+              </option>
             </select>
           </div>
 
@@ -349,7 +444,10 @@ export function RestaurantProfileForm({
               type="text"
               value={formData.direccion}
               onChange={(e) =>
-                handleChange("direccion", e.target.value)
+                handleChange(
+                  "direccion",
+                  e.target.value,
+                )
               }
               disabled={isSaving}
               className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
@@ -367,7 +465,10 @@ export function RestaurantProfileForm({
               type="text"
               value={formData.telefono}
               onChange={(e) =>
-                handleChange("telefono", e.target.value)
+                handleChange(
+                  "telefono",
+                  e.target.value,
+                )
               }
               disabled={isSaving}
               className="w-full rounded-lg border border-slate-300 px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
@@ -375,75 +476,153 @@ export function RestaurantProfileForm({
             />
           </div>
 
+          {/* =================================================
+              UBICACIÓN
+              ================================================= */}
+
+          <div className="md:col-span-2">
+            <div className="mb-3">
+              <label className="block text-sm font-semibold text-slate-700">
+                Ubicación del restaurante
+              </label>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Haz clic en el mapa para seleccionar
+                exactamente dónde se encuentra tu restaurante.
+              </p>
+            </div>
+
+            <RestaurantLocationPicker
+              latitude={formData.latitud}
+              longitude={formData.longitud}
+              onLocationChange={
+                handleLocationChange
+              }
+              disabled={isSaving}
+            />
+
+            {formData.latitud !== null &&
+              formData.longitud !== null && (
+                <div className="mt-3 rounded-lg bg-slate-50 px-4 py-3 text-xs text-slate-500">
+                  <span className="font-semibold text-slate-700">
+                    Ubicación seleccionada:
+                  </span>{" "}
+                  {formData.latitud.toFixed(6)},{" "}
+                  {formData.longitud.toFixed(6)}
+                </div>
+              )}
+          </div>
+
           {/* Horario */}
-            <div className="md:col-span-2">
-
+          <div className="md:col-span-2">
             <div className="grid gap-5 sm:grid-cols-2">
-                {/* Hora de apertura */}
-                <div>
+              {/* Apertura */}
+              <div>
                 <label className="mb-2 block text-sm font-medium text-slate-600">
-                    Hora de apertura
+                  Hora de apertura
                 </label>
 
                 <select
-                    value={formData.horarioApertura}
-                    onChange={(e) =>
-                    handleChange("horarioApertura", e.target.value)
-                    }
-                    disabled={isSaving}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
+                  value={formData.horarioApertura}
+                  onChange={(e) =>
+                    handleChange(
+                      "horarioApertura",
+                      e.target.value,
+                    )
+                  }
+                  disabled={isSaving}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
                 >
-                    {Array.from({ length: 48 }, (_, index) => {
-                    const totalMinutes = index * 30;
-                    const hours = Math.floor(totalMinutes / 60);
-                    const minutes = totalMinutes % 60;
+                  {Array.from(
+                    { length: 48 },
+                    (_, index) => {
+                      const totalMinutes =
+                        index * 30;
 
-                    const time = `${String(hours).padStart(2, "0")}:${String(
-                        minutes,
-                    ).padStart(2, "0")}`;
+                      const hours = Math.floor(
+                        totalMinutes / 60,
+                      );
 
-                    return (
-                        <option key={time} value={time}>
-                        {time}
+                      const minutes =
+                        totalMinutes % 60;
+
+                      const time = `${String(
+                        hours,
+                      ).padStart(
+                        2,
+                        "0",
+                      )}:${String(minutes).padStart(
+                        2,
+                        "0",
+                      )}`;
+
+                      return (
+                        <option
+                          key={time}
+                          value={time}
+                        >
+                          {time}
                         </option>
-                    );
-                    })}
+                      );
+                    },
+                  )}
                 </select>
-                </div>
+              </div>
 
-                {/* Hora de cierre */}
-                <div>
+              {/* Cierre */}
+              <div>
                 <label className="mb-2 block text-sm font-medium text-slate-600">
-                    Hora de cierre
+                  Hora de cierre
                 </label>
 
                 <select
-                    value={formData.horarioCierre}
-                    onChange={(e) =>
-                    handleChange("horarioCierre", e.target.value)
-                    }
-                    disabled={isSaving}
-                    className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
+                  value={formData.horarioCierre}
+                  onChange={(e) =>
+                    handleChange(
+                      "horarioCierre",
+                      e.target.value,
+                    )
+                  }
+                  disabled={isSaving}
+                  className="w-full rounded-lg border border-slate-300 bg-white px-4 py-2.5 outline-none transition focus:border-orange-500 focus:ring-2 focus:ring-orange-100 disabled:bg-slate-50"
                 >
-                    {Array.from({ length: 48 }, (_, index) => {
-                    const totalMinutes = index * 30;
-                    const hours = Math.floor(totalMinutes / 60);
-                    const minutes = totalMinutes % 60;
+                  {Array.from(
+                    { length: 48 },
+                    (_, index) => {
+                      const totalMinutes =
+                        index * 30;
 
-                    const time = `${String(hours).padStart(2, "0")}:${String(
-                        minutes,
-                    ).padStart(2, "0")}`;
+                      const hours = Math.floor(
+                        totalMinutes / 60,
+                      );
 
-                    return (
-                        <option key={time} value={time}>
-                        {time}
+                      const minutes =
+                        totalMinutes % 60;
+
+                      const time = `${String(
+                        hours,
+                      ).padStart(
+                        2,
+                        "0",
+                      )}:${String(minutes).padStart(
+                        2,
+                        "0",
+                      )}`;
+
+                      return (
+                        <option
+                          key={time}
+                          value={time}
+                        >
+                          {time}
                         </option>
-                    );
-                    })}
+                      );
+                    },
+                  )}
                 </select>
-                </div>
+              </div>
             </div>
-            </div>
+          </div>
 
           {/* Descripción */}
           <div className="md:col-span-2">
@@ -454,7 +633,10 @@ export function RestaurantProfileForm({
             <textarea
               value={formData.descripcion}
               onChange={(e) =>
-                handleChange("descripcion", e.target.value)
+                handleChange(
+                  "descripcion",
+                  e.target.value,
+                )
               }
               disabled={isSaving}
               rows={4}
@@ -469,7 +651,9 @@ export function RestaurantProfileForm({
           <button
             type="button"
             onClick={handleSaveProfile}
-            disabled={isSaving || isUploadingImage}
+            disabled={
+              isSaving || isUploadingImage
+            }
             className="flex items-center gap-2 rounded-lg bg-orange-500 px-5 py-2.5 font-semibold text-white transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-orange-300"
           >
             {isSaving ? (

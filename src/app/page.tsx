@@ -13,7 +13,27 @@ import {
   type RestaurantProfile,
 } from "@/services/restaurantService";
 
+import dynamic from "next/dynamic";
+
 import { RestaurantCard } from "@/features/restaurant/components/RestaurantCard";
+
+const RestaurantMap = dynamic(
+  () =>
+    import("@/features/restaurant/components/RestaurantMap").then(
+      (mod) => mod.RestaurantMap,
+    ),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-[500px] items-center justify-center rounded-2xl border border-slate-200 bg-white">
+        <div className="flex items-center gap-2 text-sm text-slate-500">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          Cargando mapa...
+        </div>
+      </div>
+    ),
+  },
+);
 
 const PRICE_RANGES = ["$", "$$", "$$$", "$$$$"];
 
@@ -96,6 +116,14 @@ export default function HomePage() {
       return matchesCuisine && matchesPrice;
     });
   }, [restaurants, selectedCuisines, selectedPrices]);
+
+  const restaurantsWithLocation = useMemo(() => {
+  return filteredRestaurants.filter(
+    (restaurant) =>
+      typeof restaurant.latitud === "number" &&
+      typeof restaurant.longitud === "number",
+  );
+}, [filteredRestaurants]);
 
   const toggleCuisine = (cuisine: string) => {
     setSelectedCuisines((current) =>
@@ -280,6 +308,25 @@ export default function HomePage() {
                 </div>
               )}
             </div>
+
+            {/* Mapa */}
+            {restaurantsWithLocation.length > 0 && (
+              <div className="mb-10">
+                <div className="mb-4">
+                  <h2 className="text-xl font-bold text-slate-900">
+                    Restaurantes en el mapa
+                  </h2>
+
+                  <p className="mt-1 text-sm text-slate-500">
+                    Selecciona un restaurante en el mapa para ver más información.
+                  </p>
+                </div>
+
+                <RestaurantMap
+                  restaurants={restaurantsWithLocation}
+                />
+              </div>
+            )}
 
             {/* Restaurantes */}
             {filteredRestaurants.length > 0 && (
