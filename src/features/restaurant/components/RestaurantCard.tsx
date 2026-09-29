@@ -6,6 +6,7 @@ import {
   Clock,
   UtensilsCrossed,
   CalendarPlus,
+  Star,
 } from "lucide-react";
 
 import type { RestaurantProfile } from "@/services/restaurantService";
@@ -13,10 +14,14 @@ import { RestaurantRating } from "./RestaurantRating";
 
 interface RestaurantCardProps {
   restaurant: RestaurantProfile;
+  rank?: number;
+  calificacionDestacada: number;
 }
 
 export function RestaurantCard({
   restaurant,
+  rank = 0,
+  calificacionDestacada = 0,
 }: RestaurantCardProps) {
   return (
     <div className="group overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm transition-all hover:-translate-y-1 hover:shadow-lg">
@@ -43,6 +48,13 @@ export function RestaurantCard({
           <span className="absolute right-3 top-3 rounded-full bg-white/90 px-3 py-1 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur-sm">
             {restaurant.rangoPrecios || "$$"}
           </span>
+
+          {/* Etiqueta de rank para "Para ti" */}
+          {rank > 0 && (
+            <span className="absolute left-3 top-3 rounded-full bg-orange-500 px-2.5 py-1 text-xs font-bold text-white shadow-sm">
+              #{rank} para ti
+            </span>
+          )}
         </div>
 
         {/* Información */}

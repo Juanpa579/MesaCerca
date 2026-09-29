@@ -1,6 +1,6 @@
 "use client";
 
-import { SlidersHorizontal, X } from "lucide-react";
+import { SlidersHorizontal, X, Star } from "lucide-react";
 
 interface RestaurantFiltersProps {
   cuisines: string[];
@@ -9,6 +9,9 @@ interface RestaurantFiltersProps {
   onCuisineChange: (cuisine: string) => void;
   onPriceChange: (price: string) => void;
   onClear: () => void;
+  selectedFilter?: string;
+  onFilterSelect?: (filter: string) => void;
+  showForYouButton?: boolean;
 }
 
 const PRICE_RANGES = ["$", "$$", "$$$", "$$$$"];
@@ -20,6 +23,9 @@ export function RestaurantFilters({
   onCuisineChange,
   onPriceChange,
   onClear,
+  selectedFilter,
+  onFilterSelect,
+  showForYouButton,
 }: RestaurantFiltersProps) {
   const hasFilters =
     selectedCuisines.length > 0 || selectedPrices.length > 0;
@@ -47,53 +53,82 @@ export function RestaurantFilters({
         )}
       </div>
 
-      {/* Cocina */}
-      <div className="mt-6">
-        <h3 className="text-sm font-semibold text-slate-900">
-          Filtrar por Cocina
-        </h3>
-
-        <div className="mt-3 space-y-2">
-          {cuisines.map((cuisine) => (
-            <label
-              key={cuisine}
-              className="flex cursor-pointer items-center gap-3 text-sm text-slate-600"
+      {/* Filtros en fila horizontal */}
+      <div className="mt-5 flex flex-col gap-3">
+        
+        {/* Toggle Para ti / Todas */}
+        {showForYouButton && onFilterSelect && (
+          <div className="flex items-center gap-3">
+            <span className="text-sm font-semibold text-slate-900">Vista</span>
+            <button
+              type="button"
+              onClick={() => onFilterSelect("para-ti")}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                selectedFilter === "para-ti"
+                  ? "border border-orange-500 bg-orange-500 text-white"
+                  : "border border-slate-300 bg-white text-slate-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+              }`}
             >
-              <input
-                type="checkbox"
-                checked={selectedCuisines.includes(cuisine)}
-                onChange={() => onCuisineChange(cuisine)}
-                className="h-4 w-4 rounded accent-orange-500"
-              />
+              <Star className="h-4 w-4" />
+              Para ti
+            </button>
 
-              <span>{cuisine}</span>
-            </label>
-          ))}
+            <button
+              type="button"
+              onClick={() => onFilterSelect("todas")}
+              className={`flex items-center gap-1.5 rounded-full px-4 py-2 text-sm font-medium transition-colors ${
+                selectedFilter === "todas"
+                  ? "border border-orange-500 bg-orange-500 text-white"
+                  : "border border-slate-300 bg-white text-slate-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+              }`}
+            >
+              Todas
+            </button>
+          </div>
+        )}
+
+        <div className="h-px bg-slate-100" />
+
+        {/* Filtro por Cocina - horizontal */}
+        <div className="flex flex-col gap-1">
+          <h3 className="text-sm font-semibold text-slate-900">Cocina</h3>
+          <div className="flex flex-wrap gap-2">
+            {cuisines.map((cuisine) => (
+              <button
+                key={cuisine}
+                type="button"
+                onClick={() => onCuisineChange(cuisine)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  selectedCuisines.includes(cuisine)
+                    ? "border border-orange-500 bg-orange-500 text-white"
+                    : "border border-slate-300 bg-white text-slate-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+                }`}
+              >
+                {cuisine}
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
 
-      {/* Precio */}
-      <div className="mt-6 border-t border-slate-100 pt-6">
-        <h3 className="text-sm font-semibold text-slate-900">
-          Filtrar por Rango de Precios
-        </h3>
-
-        <div className="mt-3 space-y-2">
-          {PRICE_RANGES.map((price) => (
-            <label
-              key={price}
-              className="flex cursor-pointer items-center gap-3 text-sm text-slate-600"
-            >
-              <input
-                type="checkbox"
-                checked={selectedPrices.includes(price)}
-                onChange={() => onPriceChange(price)}
-                className="h-4 w-4 rounded accent-orange-500"
-              />
-
-              <span>{price}</span>
-            </label>
-          ))}
+        {/* Filtro por Precio - horizontal */}
+        <div className="flex flex-col gap-1">
+          <h3 className="text-sm font-semibold text-slate-900">Precio</h3>
+          <div className="flex flex-wrap gap-2">
+            {PRICE_RANGES.map((price) => (
+              <button
+                key={price}
+                type="button"
+                onClick={() => onPriceChange(price)}
+                className={`rounded-full px-3 py-1.5 text-xs font-medium transition-colors ${
+                  selectedPrices.includes(price)
+                    ? "border border-orange-500 bg-orange-500 text-white"
+                    : "border border-slate-300 bg-white text-slate-700 hover:border-orange-300 hover:bg-orange-50 hover:text-orange-600"
+                }`}
+              >
+                {price}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </aside>

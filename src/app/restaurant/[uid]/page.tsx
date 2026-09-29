@@ -108,7 +108,6 @@ export default async function RestaurantPage({
             {/* =================================================
                 INFORMACIÓN
                 ================================================= */}
-            <aside className="lg:sticky lg:top-24 lg:self-start">
               <div className="rounded-2xl bg-white p-7 shadow-md">
                 <h2 className="text-3xl font-bold text-slate-900">
                   Información
@@ -185,7 +184,6 @@ export default async function RestaurantPage({
                       </div>
                     )}
                 </div>
-
                 {/* Reserva */}
                 <Link
                   href={`/restaurant/${restaurant.uid}/reserve`}
@@ -194,8 +192,7 @@ export default async function RestaurantPage({
                   <CalendarPlus className="h-6 w-6" />
                   Hacer Reserva
                 </Link>
-              </div>
-            </aside>
+              </div>       
 
             {/* =================================================
                 RESEÑAS
